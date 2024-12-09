@@ -10,6 +10,8 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 export const useFlowStore = create((set, get) => ({
   nodes: [],
   edges: [],
+  nodeOutputs: {},
+
   onNodesChange: (changes) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
@@ -32,8 +34,14 @@ export const useFlowStore = create((set, get) => ({
       position,
       data: {
         type,
+        name: '',
+        properties: {},
         onChange: (properties) => {
-          get().updateNodeProperties(newNode.id, properties);
+          if (properties.name !== undefined) {
+            get().updateNodeName(newNode.id, properties.name);
+          } else {
+            get().updateNodeProperties(newNode.id, properties);
+          }
         },
       },
     };
@@ -42,17 +50,25 @@ export const useFlowStore = create((set, get) => ({
       nodes: [...get().nodes, newNode],
     });
   },
-  deleteSelectedNodes: () => {
-    const selectedNodes = get().nodes.filter((node) => node.selected);
-    const selectedNodeIds = new Set(selectedNodes.map((node) => node.id));
-    
+  updateNodeName: (nodeId, name) => {
+    // Check for duplicate names
+    const existingNode = get().nodes.find(
+      node => node.data.name === name && node.id !== nodeId
+    );
+    if (existingNode) {
+      throw new Error('A node with this name already exists');
+    }
+
     set({
-      nodes: get().nodes.filter((node) => !selectedNodeIds.has(node.id)),
-      edges: get().edges.filter(
-        (edge) =>
-          !selectedNodeIds.has(edge.source) && !selectedNodeIds.has(edge.target)
+      nodes: get().nodes.map(node =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, name } }
+          : node
       ),
     });
+  },
+  getNodeByName: (name) => {
+    return get().nodes.find(node => node.data.name === name);
   },
   updateNodeProperties: (nodeId, properties) => {
     set({
@@ -62,5 +78,18 @@ export const useFlowStore = create((set, get) => ({
           : node
       ),
     });
+  },
+  setNodeOutput: (nodeId, output) => {
+    set(state => ({
+      nodeOutputs: {
+        ...state.nodeOutputs,
+        [nodeId]: output
+      }
+    }));
+  },
+  getNodeOutput: (nodeName) => {
+    const node = get().nodes.find(n => n.data.name === nodeName);
+    if (!node) return null;
+    return get().nodeOutputs[node.id];
   },
 }));
