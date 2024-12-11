@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -18,3 +19,25 @@ out/
 # System files
 .DS_Store
 Thumbs.db
+=======
+# Logs
+logs
+*.log
+npm-debug.log*
+.api
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+
+# Build and cache
+dist/
+.cache/
+.next/
+out/
+
+# System files
+.DS_Store
+Thumbs.db
+>>>>>>> 9fae11c161237e37d86264892aaf80eafccd7ee7
