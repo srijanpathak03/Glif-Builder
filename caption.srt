@@ -1,55 +1,71 @@
 1
-00:00:00,009 --> 00:00:01,539
+00:00:00,079 --> 00:00:01,629
 Late one foggy evening,
 
 2
-00:00:01,769 --> 00:00:06,710
-Sam found himself wandering the woods drawn to the sound of faint music.
+00:00:02,039 --> 00:00:04,389
+Sam found himself wandering the woods,
 
 3
-00:00:07,400 --> 00:00:08,460
-The deeper he went,
+00:00:04,679 --> 00:00:06,760
+drawn to the sound of faint music.
 
 4
-00:00:08,640 --> 00:00:11,489
-the louder it grew, echoing through the trees,
+00:00:07,409 --> 00:00:08,470
+The deeper he went,
 
 5
-00:00:12,149 --> 00:00:14,890
-he stumbled upon an old forgotten well,
+00:00:08,710 --> 00:00:09,739
+the louder it grew,
 
 6
-00:00:15,159 --> 00:00:16,409
-and as he approached,
+00:00:09,909 --> 00:00:11,500
+echoing through the trees.
 
 7
-00:00:16,530 --> 00:00:20,010
-the music stopped, replaced by soft whispers
+00:00:12,170 --> 00:00:14,939
+He stumbled upon an old forgotten well,
 
 8
-00:00:20,690 --> 00:00:21,909
-leaning over the edge,
+00:00:15,260 --> 00:00:16,379
+and as he approached,
 
 9
-00:00:22,200 --> 00:00:23,950
-he saw nothing but darkness.
+00:00:16,620 --> 00:00:17,770
+the music stopped,
 
 10
-00:00:24,600 --> 00:00:25,430
-Suddenly
+00:00:18,260 --> 00:00:20,010
+replaced by soft whispers.
 
 11
-00:00:25,659 --> 00:00:27,920
-a pale hand gripped his shoulder
+00:00:20,840 --> 00:00:22,110
+Leaning over the edge,
 
 12
-00:00:28,370 --> 00:00:29,860
-and before he could scream,
+00:00:22,360 --> 00:00:23,959
+he saw nothing but darkness.
 
 13
-00:00:30,219 --> 00:00:32,659
-he was pulled into the shadowy depths,
+00:00:24,750 --> 00:00:25,479
+Suddenly,
 
 14
-00:00:33,470 --> 00:00:35,610
-the forest fell silent.
+00:00:25,750 --> 00:00:27,940
+a pale hand gripped his shoulder,
+
+15
+00:00:28,430 --> 00:00:30,020
+and before he could scream,
+
+16
+00:00:30,309 --> 00:00:32,668
+he was pulled into the shadowy depths.
+
+17
+00:00:33,479 --> 00:00:34,430
+The forest
+
+18
+00:00:34,740 --> 00:00:35,630
+fell silent.
