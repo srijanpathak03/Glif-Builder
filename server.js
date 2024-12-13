@@ -546,14 +546,14 @@ if (!text || typeof text !== 'string') {
     return res.status(400).json({ error: 'Invalid input. "text" is required and must be a string.' });
 }
 try {
-    // const result = await generateVoiceFromText(text);
-    // if (!result) {
-    // return res.status(500).json({ error: 'Failed to process the text-to-speech request.' });
-    // }
-    const audioSrc ="https://res.cloudinary.com/dt6ekj5b3/video/upload/v1729100276/agoypb0fnd6hvrl76xjx.mp3";
+    const result = await generateVoiceFromText(text);
+    if (!result) {
+    return res.status(500).json({ error: 'Failed to process the text-to-speech request.' });
+    }
+    // const audioSrc ="https://res.cloudinary.com/dt6ekj5b3/video/upload/v1729100276/agoypb0fnd6hvrl76xjx.mp3";
     const duration = 35.7755;
-    // res.status(200).json({ audioUrl: result.audioUrl});
-    res.status(200).json({ audioUrl: audioSrc, duration: duration});
+    res.status(200).json({ audioUrl: result.audioUrl, duration:duration});
+    // res.status(200).json({ audioUrl: audioSrc, duration: duration});
 } catch (error) {
     console.error('Error in /generate-voice route:', error.message);
     res.status(500).json({ error: 'Internal server error.' });
@@ -587,46 +587,46 @@ app.post('/chat-completion', async (req, res) => {
 
 app.post('/generate-images-leonardo', async (req, res) => {
     try {
-        // const imagePrompts  = req.body;
-        // console.log('Received image prompts:', imagePrompts);
-        // if (!Array.isArray(imagePrompts) || imagePrompts.length === 0) {
-        //     return res.status(400).json({ error: 'imagePrompts must be a non-empty array.' });
-        // }
+        const imagePrompts  = req.body;
+        console.log('Received image prompts:', imagePrompts);
+        if (!Array.isArray(imagePrompts) || imagePrompts.length === 0) {
+            return res.status(400).json({ error: 'imagePrompts must be a non-empty array.' });
+        }
 
-        // console.log('Received image prompts:', imagePrompts);
+        console.log('Received image prompts:', imagePrompts);
         
-        // const imageUrls = [];
-        // for (let i = 0; i < imagePrompts.length; i++) {
-        //     let prompt = imagePrompts[i].prompt;
+        const imageUrls = [];
+        for (let i = 0; i < imagePrompts.length; i++) {
+            let prompt = imagePrompts[i].prompt;
             
-        //     if (typeof prompt === 'string') {
-        //         prompt = prompt.trim();
-        //     }
+            if (typeof prompt === 'string') {
+                prompt = prompt.trim();
+            }
 
-        //     console.log(`Processing prompt ${i + 1}:`, prompt);
+            console.log(`Processing prompt ${i + 1}:`, prompt);
 
-        //     try {
-        //         const imageUrl = await generateImage(prompt);
-        //         if (imageUrl) {
-        //             imageUrls.push(imageUrl);
-        //             console.log(`Image ${i + 1} generated successfully:`, imageUrl);
-        //         }
-        //     } catch (error) {
-        //         console.error(`Error generating image ${i + 1}:`, error);
-        //     }
-        // }
+            try {
+                const imageUrl = await generateImage(prompt);
+                if (imageUrl) {
+                    imageUrls.push(imageUrl);
+                    console.log(`Image ${i + 1} generated successfully:`, imageUrl);
+                }
+            } catch (error) {
+                console.error(`Error generating image ${i + 1}:`, error);
+            }
+        }
 
-        // if (imageUrls.length === 0) {
-        //     return res.status(500).json({ error: 'Failed to generate any images' });
-        // }
-        const imageUrls = [
-          'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/c8825612-de1c-4d90-a28a-5a03c58233ea/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
-          'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/fa544511-6cea-44d7-8d61-9fb91572d6e7/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
-          'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/589caa75-9f66-4bbd-a4ce-8cf27871660a/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
-          'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/9e9f480e-a937-45b6-bfff-316579bc3333/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
-          'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/da26cff2-51de-49e9-a19a-f9d5555caaf1/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
-          'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/f02bdb5b-77bc-4543-b614-9940d08f42c2/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg'
-        ]
+        if (imageUrls.length === 0) {
+            return res.status(500).json({ error: 'Failed to generate any images' });
+        }
+        // const imageUrls = [
+        //   'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/c8825612-de1c-4d90-a28a-5a03c58233ea/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
+        //   'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/fa544511-6cea-44d7-8d61-9fb91572d6e7/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
+        //   'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/589caa75-9f66-4bbd-a4ce-8cf27871660a/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
+        //   'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/9e9f480e-a937-45b6-bfff-316579bc3333/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
+        //   'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/da26cff2-51de-49e9-a19a-f9d5555caaf1/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg',
+        //   'https://cdn.leonardo.ai/users/2a2092c4-7217-41c4-95dd-82a4bed0e333/generations/f02bdb5b-77bc-4543-b614-9940d08f42c2/Leonardo_Phoenix_Tabby_Cat_Dad_grey_fluffy_cozy_sweater_caring_0.jpg'
+        // ]
 
         console.log('Returning image URLs:', imageUrls);
         return res.json({ imageUrls });
