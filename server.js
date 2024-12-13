@@ -551,9 +551,9 @@ try {
     return res.status(500).json({ error: 'Failed to process the text-to-speech request.' });
     }
     // const audioSrc ="https://res.cloudinary.com/dt6ekj5b3/video/upload/v1729100276/agoypb0fnd6hvrl76xjx.mp3";
-    const duration = 35.7755;
-    res.status(200).json({ audioUrl: result.audioUrl, duration:duration});
-    // res.status(200).json({ audioUrl: audioSrc, duration: duration});
+    // const duration = 35.7755;
+    res.status(200).json({ audioUrl: result.audioUrl, duration:duration, type:"narration"});
+    // res.status(200).json({ audioUrl: audioSrc, duration: duration, type:"narration"});
 } catch (error) {
     console.error('Error in /generate-voice route:', error.message);
     res.status(500).json({ error: 'Internal server error.' });
@@ -641,23 +641,23 @@ app.post('/generate-images-leonardo', async (req, res) => {
 });
 
 //this is for single image generation
-app.post('/generate-image', async (req, res) => {
-    try {
-      const { imagePrompt, height, width, style, styleUUID } = req.body;
-      const image = await generateImage(imagePrompt, height, width, style, styleUUID);
-      res.status(200).json(image);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-});
+// app.post('/generate-image', async (req, res) => {
+//     try {
+//       const { imagePrompt, height, width, style, styleUUID } = req.body;
+//       const image = await generateImage(imagePrompt, height, width, style, styleUUID);
+//       res.status(200).json(image);
+//     } catch (error) {
+//       res.status(500).json({ error: error.message });
+//     }
+// });
 
 // narrations wale videos
 app.post('/create-video-with-subtitles', async (req, res) => {
     try {
         console.log("Received request body:", req.body);
-        const { imageSources, audioSources, height = 720, width = 1280, topic = "cat" } = req.body;
+        const { imageSources, audioSources, height = 720, width = 1280, topic = "flow" } = req.body;
         const imageUrls = imageSources[0]?.imageUrls || [];
-        const { audioUrl, audioDuration } = audioSources;
+        const { audioUrl, audioDuration , type} = audioSources;
 
         if (!imageUrls.length || !audioUrl || !audioDuration) {
             return res.status(400).json({ 
@@ -669,8 +669,12 @@ app.post('/create-video-with-subtitles', async (req, res) => {
                 }
             });
         }
-
-        const result = await runVideoCreation(imageUrls, audioUrl, audioDuration, topic, height, width);
+        let result;
+        if (type === "music"){
+          result = await runVideoCreationWithMusic(imageUrls, audioUrl, audioDuration, topic, height, width);
+        }else{
+          result = await runVideoCreation(imageUrls, audioUrl, audioDuration, topic, height, width);
+        }
         res.status(200).json({ message: 'Video created successfully', videoUrl: result.url });
     } catch (error) {
         console.error('Error in video creation:', error);
