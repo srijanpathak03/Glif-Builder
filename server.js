@@ -11,6 +11,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const cors = require('cors');
 require('dotenv').config();
 const { getCollections, connect } = require('./mongoConnection');
+const { ObjectId } = require('mongodb');
 
 const app = express();
 const PORT = 3000;
@@ -563,6 +564,7 @@ try {
 app.post('/chat-completion', async (req, res) => {
     try {
         const { prompt } = req.body;
+        console.log("Recieved Prompts: ",prompt);
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: 'gpt-3.5-turbo',
             messages: [{ role: 'user', content: prompt }],
@@ -750,6 +752,221 @@ app.get('/api/flows', async (req, res) => {
             details: error.message 
         });
     }
+});
+
+app.post('/api/generate-from-template', async (req, res) => {
+  try {
+    const { templateId } = req.body;
+    console.log("Req Body: ", req.body)
+    if (!templateId) {
+      return res.status(400).json({ error: 'Template ID is required' });
+    }
+
+    // Get the flow template from database
+    const { flowsCollection } = await getCollections();
+    
+    let template;
+    try {
+      template = await flowsCollection.findOne({ 
+        $or: [
+          { _id: new ObjectId(templateId) },
+          { name: templateId },
+          { templateId: templateId }
+        ]
+      });
+    } catch (e) {
+      template = await flowsCollection.findOne({
+        $or: [
+          { name: templateId },
+          { templateId: templateId }
+        ]
+      });
+    }
+    
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    console.log('Template data:', JSON.stringify(template.data, null, 2));
+
+    // Initialize nodes and edges from template data
+    const nodes = template.data.nodes;
+    const edges = template.data.edges;
+    const nodeOutputs = new Map();
+
+    // Helper function to get node output
+    const getNodeOutput = (nodeName) => {
+      if (!nodeName) return null;
+      const node = nodes.find(n => n.data?.name === nodeName);
+      return node ? nodeOutputs.get(node.id) : null;
+    };
+
+    const processNode = async (node) => {
+      try {
+        // Validate node structure
+        if (!node || !node.id || !node.data || !node.data.type) {
+          throw new Error(`Invalid node structure: ${JSON.stringify(node)}`);
+        }
+
+        // Check if already processed
+        if (nodeOutputs.has(node.id)) {
+          return nodeOutputs.get(node.id);
+        }
+
+        console.log(`Processing node: ${node.data.name} (${node.data.type})`);
+
+        // Process input nodes first
+        const inputEdges = edges.filter(edge => edge.target === node.id);
+        const inputNodes = inputEdges.map(edge => {
+          const sourceNode = nodes.find(n => n.id === edge.source);
+          if (!sourceNode) {
+            throw new Error(`Source node not found for edge: ${edge.source} -> ${edge.target}`);
+          }
+          return sourceNode;
+        });
+
+        // Wait for input nodes to complete
+        await Promise.all(inputNodes.map(async (inputNode) => {
+          if (!nodeOutputs.has(inputNode.id)) {
+            await processNode(inputNode);
+          }
+        }));
+
+        let response;
+        switch (node.data.type) {
+          case 'text-generation':
+            let processedPrompt = node.data.properties?.prompt;
+            if (!processedPrompt) {
+              throw new Error('Text generation node missing prompt property');
+            }
+
+            const placeholderRegex = /{([^}]+)\.output}/g;
+            processedPrompt = processedPrompt.replace(placeholderRegex, (match, nodeName) => {
+              const output = getNodeOutput(nodeName);
+              return output || match;
+            });
+
+            response = await axios.post('http://localhost:3000/chat-completion', {
+              prompt: processedPrompt,
+              nodeId: node.id,
+              nodeType: node.data.type
+            });
+            break;
+
+          case 'image-generation':
+            const sourceNode = inputNodes[0];
+            if (!sourceNode) {
+              throw new Error('Image generation node missing input node');
+            }
+
+            const sourceOutput = getNodeOutput(sourceNode.data.name);
+            if (!sourceOutput) {
+              throw new Error('No output found from source node for image generation');
+            }
+
+            let imagePrompts;
+            try {
+              imagePrompts = typeof sourceOutput === 'string' 
+                ? JSON.parse(sourceOutput) 
+                : sourceOutput;
+            } catch (e) {
+              imagePrompts = [{ prompt: sourceOutput }];
+            }
+
+            response = await axios.post('http://localhost:3000/generate-images-leonardo', imagePrompts);
+            break;
+
+          case 'video-composition':
+            try {
+              const imageSourceStr = node.data.properties?.imageSource;
+              const audioSourceStr = node.data.properties?.audioSource;
+
+              if (!imageSourceStr || !audioSourceStr) {
+                throw new Error('Missing image or audio source in video composition node');
+              }
+
+              // Get image data
+              const imageOutput = getNodeOutput(imageSourceStr.match(/{([^}]+)\.output}/)[1]);
+              
+              // Parse audio data
+              let audioData;
+              try {
+                audioData = JSON.parse(audioSourceStr);
+              } catch (e) {
+                throw new Error('Invalid audio source format');
+              }
+
+              if (!imageOutput?.imageUrls) {
+                throw new Error('No image URLs available for video composition');
+              }
+
+              const videoPayload = {
+                imageSources: [{ imageUrls: imageOutput.imageUrls }],
+                audioSources: {
+                  audioUrl: audioData.audioUrl,
+                  audioDuration: audioData.duration || 30.00,
+                  type: audioData.type || 'narration',
+                },
+                height: node.data.properties?.height || 720,
+                width: node.data.properties?.width || 1280,
+                topic: node.data.properties?.topic || 'flow'
+              };
+
+              console.log('Video composition payload:', videoPayload);
+
+              response = await axios.post('http://localhost:3000/create-video-with-subtitles', videoPayload);
+            } catch (error) {
+              console.error('Error in video composition:', error);
+              throw error;
+            }
+            break;
+
+          default:
+            throw new Error(`Unsupported node type: ${node.data.type}`);
+        }
+
+        if (!response || !response.data) {
+          throw new Error(`No response data from ${node.data.type} processing`);
+        }
+
+        nodeOutputs.set(node.id, response.data);
+        return response.data;
+
+      } catch (error) {
+        console.error(`Error processing node ${node?.id}:`, error);
+        console.error('Node data:', JSON.stringify(node, null, 2));
+        throw error;
+      }
+    };
+
+    // Find the video composition node
+    const videoNode = nodes.find(node => node.data?.type === 'video-composition');
+    if (!videoNode) {
+      throw new Error('No video composition node found in template');
+    }
+
+    // Process the video node (this will process all required nodes in sequence)
+    const result = await processNode(videoNode);
+
+    if (!result?.videoUrl && !result?.url) {
+      throw new Error('Video processing failed to produce a valid URL');
+    }
+
+    res.status(200).json({
+      success: true,
+      videoUrl: result.videoUrl || result.url,
+      status: 'ready',
+      message: 'Video generated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error generating from template:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 });
 
 connect()
